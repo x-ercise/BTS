@@ -68,7 +68,12 @@ export default class RegisterPage extends Component {
             }, 2500)
         
         } catch (error) {
-            Alert.alert("Network error", error.message, [{ text : 'Dismiss' }])
+            
+            Alert.alert("Network error", error.message, [
+                { text : 'Dismiss' }
+            ])
+            this.setState({ loading : false })
+            
         }
     }
     onProxyDone = (objJson) =>  {
