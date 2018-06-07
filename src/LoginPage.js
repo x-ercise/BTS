@@ -89,7 +89,7 @@ export default class LoginPage extends React.Component {
                 [{ text: 'DISMISS', onPress: () =>  this.onFingerListening() }]
             )
         } else {
-            
+            /*
             Alert.alert(
                 'Authentication', jsonData.Message,
                 [
@@ -97,8 +97,8 @@ export default class LoginPage extends React.Component {
                     { text: 'DISMISS', onPress: () =>  this.onFingerListening() }
                 ]
             )
-            
-            //this.openBrowser(jsonData.RedirectUrl)
+            */
+            this.openBrowser(jsonData.RedirectUrl)
         }
     }
     onProxyError = (error) => {
