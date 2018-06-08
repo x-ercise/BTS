@@ -18,7 +18,7 @@ Keychain.ACCESS_CONTROL.DEVICE_PASSCODE,
 Keychain.ACCESS_CONTROL.APPLICATION_PASSWORD, 
 Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET]
 
-export default class RegisterPage extends React.Component {
+export default class RegisterPageIOS extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -53,26 +53,25 @@ export default class RegisterPage extends React.Component {
         try {
 
             const strUrl = queryString
-            this.setState({ loading : true })
+            //this.setState({ loading : true })
 
             let objJson = await fetch(strUrl, ApiUtils.optionPOST)
                                 .then(ApiUtils.checkStatus)
                                 .then(response => response.json())
                                 .catch((error) => this.onProxyError(error))
-            
-
+                                
             setTimeout(() => {
                 if (objJson) {
                     this.onProxyDone(objJson)
                 }
-            }, 2500)
+            }, 5000)
         
         } catch (error) {
             Alert.alert("Network error", error.message, [{ text : 'Dismiss' }])
         }
     }
     onProxyDone = (objJson) =>  {
-        this.setState({ loading : false })
+        //this.setState({ loading : false })
         const { user, passwd, endpoint } = this.state
         let jsonError = objJson.ErrorView  //IsError, Code, Message, Detail, Api, Verb, StackTrace, ErrorObject
         let jsonData = objJson.Datas.Data1 //Message,UserName, Password, FingerPrint1, FingerPrint2, MobileToken, RedirectUrl, SampleMobileToken
@@ -210,13 +209,16 @@ const styles = StyleSheet.create({
         resizeMode: 'stretch',
     },
     caption: {
-        padding:40,
+        padding:10,
+        paddingVertical:40,
+        flexDirection: 'row',
+        justifyContent : 'center',
+        alignItems     : 'center',
     },
     form: {
         flexGrow: 1,
         alignItems: 'center',
         justifyContent: 'center'
-        
     },
     input: {
         height: 40,
@@ -224,6 +226,12 @@ const styles = StyleSheet.create({
         marginBottom:20,
         color: '#111',
         paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: '#999999',
+        borderBottomLeftRadius: 8,
+        borderBottomRightRadius: 8,
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
     },
     buttonContainer: {
         backgroundColor: '#2980b9',

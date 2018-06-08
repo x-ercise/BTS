@@ -12,7 +12,7 @@ import Loader             from './Components/Loader'
 import ApiUtils           from './Services//ApiUtils'
 import ShakingText        from './Components/ShakingText'
 
-export default class LoginPage extends React.Component {
+export default class LoginPageIOS extends React.Component {
     
     constructor(props) {
         super(props)
@@ -33,19 +33,37 @@ export default class LoginPage extends React.Component {
 
     handleFingerprintMessageDismissed = () => {
         this.setState({ sensorPrompted: true, errorMessage: '' })
+        //this.onFingerListening()
     }
 
     componentWillUnmount() {
         FingerprintScanner.release()
     }
     componentDidMount() {
+        /*
         this.getCredential()
         .then(() => {
             FingerprintScanner
             .isSensorAvailable()
             .catch(error => this.setState({ errorMessage: error.message }))
         })
-        this.onFingerListening()
+        .then(() => {
+            if(this.state.sensorPrompted)
+                this.onFingerListening()
+            else {
+                FingerprintScanner
+                .authenticate({ onAttempt: this.handleAuthenticationAttempted })
+                .then(() => this.onRedirect())
+            }
+        })
+        */
+        Promise.all([
+            this.getCredential(), 
+            FingerprintScanner.isSensorAvailable().catch(error => this.setState({ errorMessage: error.message }))
+        ])
+        .then(resolve => {
+            this.onFingerListening()
+        })
     }
     handleAuthenticationAttempted = (error) => {
         this.setState({errorMessage: error.message})
@@ -55,7 +73,7 @@ export default class LoginPage extends React.Component {
         FingerprintScanner
         .authenticate({ onAttempt: this.handleAuthenticationAttempted })
         .then(() => this.onRedirect())
-        .catch((error) => { this.handleAuthenticationAttempted(error) })
+        .catch((error) => this.setState({ sensorPrompted: false, errorMessage: error.message }))
     }
     
     onRedirect = async() => {
@@ -69,12 +87,12 @@ export default class LoginPage extends React.Component {
                                 .then(response => response.json())
                                 .catch((error) => this.onProxyError(error))
             
-
-            setTimeout(() => {
+            Promise.all(objJson)
+            .then(resolve => {
                 if (objJson)
                     this.onProxyDone(objJson)
-            }, 2500)
-        
+            })
+
         } catch (error) {
             Alert.alert("error", error)
         }
@@ -146,7 +164,12 @@ export default class LoginPage extends React.Component {
             if (!supported) {
                 Alert.alert('Can\'t handle url: ' + url)
             } else {
-                return Linking.openURL(url) && RNExitApp.exitApp()
+
+                Linking.openURL(url)
+                .then(resolve => {
+                    RNExitApp.exitApp()
+                })
+                
             }
         }).catch(error => Alert.alert('An error occurred', error))
     }
@@ -178,7 +201,7 @@ export default class LoginPage extends React.Component {
                         }}>
                         <TouchableOpacity
                             style  ={styles.fingerprint}
-                            onPress={this.handleFingerprintMessageShowed}>
+                            onPress={this.handleFingerprintMessageDismissed}>
                             <Image source={require('./assets/finger_print.png')} />
                         </TouchableOpacity>
                         <Text>{ sensorPrompted? 'Touch sensor': 'Touch sensor again' }</Text>
@@ -213,21 +236,28 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5FCFF',
     },
     rowHeader: {
-        flex           : 0.3,
+        flex           : 1,
+        flexGrow       : 0.3,
         flexDirection  : 'row',
+        alignItems     : 'center',
     },
     rowBody: {
-        flexGrow       : 1,
+        flex           : 1,
+        flexGrow       : 0.7,
         flexDirection  : 'row',
+        alignItems     : 'center',
+        justifyContent : 'center',
+        marginBottom   : 10,
     },
     rowFooter: {
         flex           : 0.1,
+        flexGrow       : 0.1,
         flexDirection  : 'row',
         justifyContent : 'flex-end',
-        marginBottom   : 10,
+        
     },
     logo: {
-        marginTop : 20,
+        //marginTop : 70,
         width : 500,
         height: 90,
     },

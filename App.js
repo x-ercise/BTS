@@ -4,17 +4,22 @@
  * @flow
  */
 import React from 'react';
-import { StyleSheet } from 'react-native'
+import { Platform, StyleSheet } from 'react-native'
 import { Router, Scene, Actions, TabIcon } from 'react-native-router-flux';
 import LoginPage from './src/LoginPage';
 import RegisterPage from './src/RegisterPage';
+import LoginPageIOS from './src/LoginPage.ios';
+import RegisterPageIOS from './src/RegisterPage.ios';
 
 
 type Props = {};
 export default class App extends React.Component<Props> {
   render() {
-    return (
-      <Router>
+    let isIOS = (Platform.OS === 'ios');
+    
+
+    const sceneIOS = (
+      
         <Scene key="root" tabs={false} 
                tabBarStyle={styles.tabBar }
                navigationBarStyle={styles.navBar} 
@@ -23,18 +28,44 @@ export default class App extends React.Component<Props> {
                barButtonIconStyle={styles.barButtonIcon}
                >
           <Scene key="login" 
-                 component={LoginPage} 
-                 title="LOGIN" 
-                 hideNavBar
-                 initial
-                 />
+                component={LoginPageIOS} 
+                title="LOGIN" 
+                hideNavBar
+                initial
+                />
           <Scene key="register" 
-                 component={RegisterPage}  
-                 title="REGISTER"
-                 />
+                  component={RegisterPageIOS}  
+                  title="REGISTER"
+                  />
         </Scene>
-      </Router>
-    );
+      
+    )
+    const sceneAndroid = (
+        <Scene key="root" tabs={false} 
+               tabBarStyle={styles.tabBar }
+               navigationBarStyle={styles.navBar} 
+               titleStyle={styles.navBarTitle} 
+               barButtonTextStyle={styles.barButtonText} 
+               barButtonIconStyle={styles.barButtonIcon}
+               >
+          <Scene key="login" 
+                component={LoginPage} 
+                title="LOGIN" 
+                hideNavBar
+                initial
+                />
+          <Scene key="register" 
+                  component={RegisterPage}  
+                  title="REGISTER"
+                  />
+        </Scene>
+      
+    )
+    return ( 
+        <Router>
+          { isIOS? sceneIOS : sceneAndroid }
+        </Router>
+    )
   }
 }
 
