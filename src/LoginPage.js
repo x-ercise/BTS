@@ -11,6 +11,8 @@ import RNExitApp          from 'react-native-exit-app'
 import Loader             from './Components/Loader'
 import ApiUtils           from './Services//ApiUtils'
 import ShakingText        from './Components/ShakingText'
+import bts_logo           from './assets/bts_logo.png'
+import finger_print       from './assets/finger_print.png'
 
 export default class LoginPage extends React.Component {
     
@@ -21,35 +23,50 @@ export default class LoginPage extends React.Component {
             endpoint       : '',
             password       : '',
             accessToken    : '',
-            errorMessage   : undefined,
+            errorMessage   : ' ',
             sensorPrompted : false,
             loading        : false
         }
+        this.handleFingerprintMessageDismissed = this.handleFingerprintMessageDismissed.bind(this)
     }
 
     handleFingerprintMessageShowed = () => {
-        this.setState({ sensorPrompted: false })
+        let isAvai = FingerprintScanner.isSensorAvailable()
+        this.setState({ sensorPrompted: isAvai })
+        this.onFingerListening()
+    }
+
+    onFingerError(errorMessage) {
+        this.setState({ sensorPrompted: true, errorMessage: errorMessage })
     }
 
     handleFingerprintMessageDismissed = () => {
-        this.setState({ sensorPrompted: true, errorMessage: '' })
+        this.setState({ sensorPrompted: true, errorMessage: ' ' })
     }
-
+    componentWillMount() {
+        //await this.getCredential()
+        Promise.all([this.getCredential(), FingerprintScanner.isSensorAvailable()])
+    }
     componentWillUnmount() {
         FingerprintScanner.release()
     }
     componentDidMount() {
+        /*
         this.getCredential()
         .then(() => {
             FingerprintScanner
             .isSensorAvailable()
-            .catch(error => this.setState({ errorMessage: error.message }))
+            .catch(error => this.setState({ sensorPrompted: false, errorMessage: error.message }))
         })
         this.onFingerListening()
+        */
     }
     handleAuthenticationAttempted = (error) => {
-        this.setState({errorMessage: error.message})
-        this.onFingerListening()
+        this.setState({ sensorPrompted: false, errorMessage: error.message})
+        if (error.message.trim().length > 0)
+            RNExitApp.exitApp()
+        else
+            this.onFingerListening()
     }
     onFingerListening = () => {
         FingerprintScanner
@@ -168,7 +185,7 @@ export default class LoginPage extends React.Component {
                     <Image  
                         style     ={styles.logo} 
                         resizeMode='contain' 
-                        source    ={require('./assets/bts_logo.png')} />
+                        source    ={bts_logo} />
                 </View>
                 <View style={styles.rowBody}>
                     <View style={{
@@ -179,15 +196,18 @@ export default class LoginPage extends React.Component {
                         <TouchableOpacity
                             style  ={styles.fingerprint}
                             onPress={this.handleFingerprintMessageShowed}>
-                            <Image source={require('./assets/finger_print.png')} />
+                            <Image source={finger_print} />
                         </TouchableOpacity>
-                        <Text>{ sensorPrompted? 'Touch sensor': 'Touch sensor again' }</Text>
+                        <Text>{ sensorPrompted? 'Touch sensor': 'Tap on finger print screen' }</Text>
                         {errorMessage && (
                             <View style={styles.messageContainner}>
                                 <Text style={styles.errorMessage}>
+                                    {errorMessage || 'Scan your fingerprint on the\ndevice scanner to continue'}
+                                    {/*
                                     <ShakingText ref={(instance) => { this.description = instance }}>
                                         {errorMessage || 'Scan your fingerprint on the\ndevice scanner to continue'}
                                     </ShakingText>
+                                    */}
                                 </Text>
                             </View>
                         )}
