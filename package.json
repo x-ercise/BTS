@@ -3,8 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start",
-    "test": "jest"
+    "start": "node node_modules/react-native/local-cli/cli.js start --port=8081",
+    "test": "jest",
+    "ios:build": "react-native bundle --entry-file='index.js' --dev=false --platform='ios' --bundle-output='./ios/BTS/main.jsbundle' --assets-dest='./ios'",
+    "ios:bundle": "react-native bundle --entry-file index.js --platform ios --dev=false --bundle-output ios/BTS/main.jsbundle --assets-dest ios",
+    "ios:release": "react-native run-ios --configuration=release"
   },
   "dependencies": {
     "eslint": "^4.19.1",
@@ -23,7 +26,8 @@
     "babel-jest": "23.0.1",
     "babel-preset-react-native": "4.0.0",
     "jest": "23.1.0",
-    "react-test-renderer": "16.3.1"
+    "react-test-renderer": "16.3.1",
+    "uglify-es": "^3.3.9"
   },
   "jest": {
     "preset": "react-native"
