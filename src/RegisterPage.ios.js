@@ -29,55 +29,115 @@ export default class RegisterPageIOS extends React.Component {
             accessToken : '',
             endpoint    : '',
             loading     : false,
+            jsonObj     : {},
         }
-
+        this.onContinue = this.onContinue.bind(this)
     }
     
     componentDidMount() {
-        this.getCredential()
+        Promise.all([this.getCredential()])
+        .then(() => {
+            this.setState({ loading : false })
+        })
+        
     }
     
     onContinue = () => {
+
         Keyboard.dismiss()
         const { user, passwd, endpoint } = this.state
-
+        
         if (user && passwd) {
             let queryString = endpoint + ApiUtils.urlRegisterTest + user + '|' + passwd + '||'
-            this.onSubscribe(queryString)
+            Promise.all([
+                this.onSubscribe(queryString),
+
+            ])
+            .then(() => {
+                this.setState({ loading : false })
+            })
+            .catch((error) => {
+                this.setState({ loading : false })
+            })
         } else {
-            Alert.alert('Form required', 'Please entry username or password', [{ text : 'Dismiss' }])
+            this.setState({ loading : false })
+            Alert.alert(
+                'Form required'
+                , 'Please entry username or password'
+                , [{ text : 'Dismiss', onPress: () => {} }]
+                , { cancelable: false }
+            )
         }
     }
     
-    onSubscribe = async(queryString) => {
+    async onFetch(queryString) {
+        const strUrl = queryString
+        await fetch(strUrl, ApiUtils.optionPOST)
+            .then(ApiUtils.checkStatus)
+            .then(response => response.json())
+            .then(json => {
+                this.setState({
+                    jsonObj : json,
+                    loading : false
+                })
+            })
+            .catch((error) => this.onProxyError(error))
+    }
+
+    onSubscribe = (queryString) => {
         try {
-
+            this.setState({ loading : true })
             const strUrl = queryString
-            //this.setState({ loading : true })
-
-            let objJson = await fetch(strUrl, ApiUtils.optionPOST)
-                                .then(ApiUtils.checkStatus)
-                                .then(response => response.json())
-                                .catch((error) => this.onProxyError(error))
-                                
-            setTimeout(() => {
-                if (objJson) {
-                    this.onProxyDone(objJson)
+            
+            Promise.all([this.onFetch(strUrl)])
+            .then(() => {
+                const { user, passwd, endpoint, jsonObj } = this.state
+                let jsonError = jsonObj.ErrorView  //IsError, Code, Message, Detail, Api, Verb, StackTrace, ErrorObject
+                let jsonData = jsonObj.Datas.Data1 //Message,UserName, Password, FingerPrint1, FingerPrint2, MobileToken, RedirectUrl, SampleMobileToken
+                
+                if (jsonError.IsError) {
+                    Alert.alert(
+                        'Error'
+                        , jsonError.Message
+                        , [{ text : 'Dismiss', onPress: () => {} }]
+                        , { cancelable: false }
+                    )
+                } else {
+                    this.setState({
+                        finger1     : jsonData.FingerPrint1,
+                        finger2     : jsonData.FingerPrint2,
+                        accessToken : jsonData.MobileToken
+                    })
+                    let services = JSON.stringify({
+                        endpoint : endpoint,
+                        password : passwd,
+                        accessToken : jsonData.MobileToken
+                    })
+                    
+                    Alert.alert('Infomation', jsonData.Message,
+                        [{ text : 'Agree', onPress: async() => await this.setCredential(user, services) }]
+                    )
+                    
                 }
-            }, 5000)
-        
+            })
+
         } catch (error) {
-            Alert.alert("Network error", error.message, [{ text : 'Dismiss' }])
+            this.onProxyError(error)
         }
     }
     onProxyDone = (objJson) =>  {
-        //this.setState({ loading : false })
+        this.setState({ loading : false })
         const { user, passwd, endpoint } = this.state
         let jsonError = objJson.ErrorView  //IsError, Code, Message, Detail, Api, Verb, StackTrace, ErrorObject
         let jsonData = objJson.Datas.Data1 //Message,UserName, Password, FingerPrint1, FingerPrint2, MobileToken, RedirectUrl, SampleMobileToken
         
         if (jsonError.IsError) {
-            Alert.alert('Error', jsonError.Message, [{ text : 'Dismiss' }])
+            Alert.alert(
+                'Error'
+                , jsonError.Message
+                , [{ text : 'Dismiss', onPress: () => {} }]
+                , { cancelable: false }
+            )
         } else {
             this.setState({
                 finger1     : jsonData.FingerPrint1,
@@ -90,18 +150,29 @@ export default class RegisterPageIOS extends React.Component {
                 accessToken : jsonData.MobileToken
             })
             Alert.alert('Infomation', jsonData.Message,
-                [{ text : 'Agree', onPress: () => this.setCredential(user, services) }]
+                [{ text : 'Agree', onPress: async() => await this.setCredential(user, services) }]
             )
         }
     }
     onProxyError = (error) => {
         this.setState({ loading : false })
         if (error.response && !error.response.ok)
-            Alert.alert('Network error', error.response.status + ' access service', [{ text : 'Dismiss' }])
+            Alert.alert(
+                'Network error'
+                , error.response.status + ' access service'
+                , [{ text : 'Dismiss', onPress: () => {} }]
+                , { cancelable: false }
+            )
         else 
-            Alert.alert('Network error', error.message, [{ text : 'Dismiss' }])
+            Alert.alert(
+                'Network error'
+                , error.message
+                , [{ text : 'Dismiss', onPress: () => {} }]
+                , { cancelable: false }
+            )
     }
     setCredential = async(username, services) => {
+        
         try {
             const credentials = await Keychain.getGenericPassword()
             if (credentials) {
@@ -110,6 +181,7 @@ export default class RegisterPageIOS extends React.Component {
             } else {
                 //console.log('No credentials stored')
             }
+            this.setState({ loading : false })
             await Keychain.setGenericPassword(username, services).done(() => {
                 Actions.login()
             })
@@ -117,12 +189,19 @@ export default class RegisterPageIOS extends React.Component {
             if(error === 'INVALID_CREDENTIALS')
                 Keychain.resetGenericPassword()
                 
-            Alert.alert('Keychain couldn\'t be accessed!', error)
+            Alert.alert(
+                'Keychain couldn\'t be accessed!'
+                , error
+                , [{ text : 'Dismiss', onPress: () => {} }]
+                , { cancelable: false }
+            )
         }
     }
     getCredential = async() => {
-
+        
         try {
+            this.setState({ loading : false })
+
             const credentials = await Keychain.getGenericPassword()
             if (credentials) {
                 const { endpoint, password, accessToken } = JSON.parse(credentials.password)
@@ -134,7 +213,12 @@ export default class RegisterPageIOS extends React.Component {
                         endpoint    : endpoint 
                     })
                 } else {
-                    Alert.alert('error','No credentials stored', [{ text : 'Dismiss' }])
+                    Alert.alert(
+                        'error'
+                        ,'No credentials stored'
+                        , [{ text : 'Dismiss', onPress: () => {} }]
+                        , { cancelable: false }
+                    )
                 }
             } else {
                 //Alert.alert('error2', 'No credentials stored', [{ text : 'Dismiss' }])
@@ -145,17 +229,23 @@ export default class RegisterPageIOS extends React.Component {
             }
 
         } catch (error) {
-            Alert.alert('Keychain couldn\'t be accessed!', error)
+            
+            Alert.alert(
+                'Keychain couldn\'t be accessed!'
+                , error
+                , [{ text : 'Dismiss', onPress: () => {} }]
+                , { cancelable: false }
+            )
         }
       
     }
 
     render() {
-        const {user, passwd, endpoint } = this.state
+        const {user, passwd, endpoint, loading } = this.state
 
         return (
             <View style={styles.container}>
-                <Loader loading={this.state.loading} />
+                <Loader loading={loading} />
                 <KeyboardAvoidingView behavior="padding">
                     <View style={styles.caption}>
                         <Text>Fingerprint Registration (only first time)</Text>
@@ -163,6 +253,7 @@ export default class RegisterPageIOS extends React.Component {
                     <View styles={styles.form}>
                         <TextInput
                             dataDetectorType = "link"
+                            autoCapitalize = 'none'
                             placeholder    ="input end point service address"
                             style          ={styles.input}
                             value          ={this.state.endpoint}
@@ -170,12 +261,14 @@ export default class RegisterPageIOS extends React.Component {
                             value          ={this.state.endpoint} />
                         <TextInput
                             placeholder    ="input username"
+                            autoCapitalize = 'none'
                             style          ={styles.input}
                             value          ={this.state.user}
                             onChangeText   ={(text) => this.setState({user : text})}
                             value          ={this.state.user} />
                         <TextInput
                             placeholder    ="input password"
+                            autoCapitalize = 'none'
                             style          ={styles.input}
                             secureTextEntry={true}
                             onChangeText   ={(text) => this.setState({passwd: text})}

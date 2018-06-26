@@ -23,7 +23,8 @@ export default class LoginPageIOS extends React.Component {
             accessToken    : '',
             errorMessage   : undefined,
             sensorPrompted : false,
-            loading        : false
+            loading        : false,
+            jsonObj        : {}
         }
     }
 
@@ -40,23 +41,7 @@ export default class LoginPageIOS extends React.Component {
         FingerprintScanner.release()
     }
     componentDidMount() {
-        /*
-        this.getCredential()
-        .then(() => {
-            FingerprintScanner
-            .isSensorAvailable()
-            .catch(error => this.setState({ errorMessage: error.message }))
-        })
-        .then(() => {
-            if(this.state.sensorPrompted)
-                this.onFingerListening()
-            else {
-                FingerprintScanner
-                .authenticate({ onAttempt: this.handleAuthenticationAttempted })
-                .then(() => this.onRedirect())
-            }
-        })
-        */
+
         Promise.all([
             this.getCredential(), 
             FingerprintScanner.isSensorAvailable().catch(error => this.setState({ errorMessage: error.message }))
@@ -76,19 +61,29 @@ export default class LoginPageIOS extends React.Component {
         .catch((error) => this.setState({ sensorPrompted: false, errorMessage: error.message }))
     }
     
-    onRedirect = async() => {
+    async onFetch(queryString) {
+        const strUrl = queryString
+        await fetch(strUrl, ApiUtils.optionPOST)
+            .then(ApiUtils.checkStatus)
+            .then(response => response.json())
+            .then(json => {
+                this.setState({
+                    jsonObj : json,
+                    loading : false
+                })
+            })
+            .catch((error) => this.onProxyError(error))
+    }
+
+    onRedirect = () => {
         try {
+            this.setState({ loading : true })
             const { user, endpoint, accessToken } = this.state
             let strUrl = endpoint + ApiUtils.urlLogin + accessToken
 
-            this.setState({ loading : true })
-            let objJson = await fetch(strUrl, ApiUtils.optionPOST)
-                                .then(ApiUtils.checkStatus)
-                                .then(response => response.json())
-                                .catch((error) => this.onProxyError(error))
-            
-            Promise.all(objJson)
-            .then(resolve => {
+            Promise.all([this.onFetch(strUrl)])
+            .then(() => {
+                const objJson = this.state.jsonObj
                 if (objJson)
                     this.onProxyDone(objJson)
             })
@@ -98,7 +93,6 @@ export default class LoginPageIOS extends React.Component {
         }
     }
     onProxyDone = (objJson) => {
-        this.setState({ loading : false })
         let jsonError = objJson.ErrorView  //IsError, Code, Message, Detail, Api, Verb, StackTrace, ErrorObject
         let jsonData = objJson.Datas.Data1 //Message,UserName, Password, FingerPrint1, FingerPrint2, MobileToken, RedirectUrl, SampleMobileToken
         
@@ -107,20 +101,10 @@ export default class LoginPageIOS extends React.Component {
                 [{ text: 'DISMISS', onPress: () =>  this.onFingerListening() }]
             )
         } else {
-            /*
-            Alert.alert(
-                'Authentication', jsonData.Message,
-                [
-                    { text: 'LET\'s GO', onPress: () => this.openBrowser(jsonData.RedirectUrl)},
-                    { text: 'DISMISS', onPress: () =>  this.onFingerListening() }
-                ]
-            )
-            */
             this.openBrowser(jsonData.RedirectUrl)
         }
     }
     onProxyError = (error) => {
-        this.setState({ loading : false })
         if (error.response && !error.response.ok)
             Alert.alert('Network error', error.response.status + ' access service', [{ text : 'Dismiss' }])
         else {
@@ -159,7 +143,7 @@ export default class LoginPageIOS extends React.Component {
     removeCredential = async() => {
         await Keychain.resetGenericPassword()
     }
-    openBrowser = async (url) => {
+    openBrowser = (url) => {
         Linking.canOpenURL(url).then(supported => {
             if (!supported) {
                 Alert.alert('Can\'t handle url: ' + url)
