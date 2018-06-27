@@ -138,8 +138,8 @@ export default class RegisterPage extends React.Component {
                     Alert.alert('error','No credentials stored', [{ text : 'Dismiss' }])
                 }
             } else {
-                //Alert.alert('error2', 'No credentials stored', [{ text : 'Dismiss' }])
-                let ep = (!credentials.endpoint && "http://spwwebapi.azurewebsites.net/api")
+                //let ep = (!credentials.endpoint && "http://spwwebapi.azurewebsites.net/api")
+                let ep = (!credentials.endpoint && "http://192.168.1.252/SPWWebAPI/api")
                 this.setState({
                     endpoint : ep
                 })
