@@ -15,7 +15,7 @@ import bts_logo      from './assets/bts_logo.png'
 const credentialAppName = "BlessedTotalSolution"
 //const defaultApi = "http://spwwebapi.azurewebsites.net/api"
 const defaultApi = "http://192.168.1.252/SPWWebAPI/api"
-export default class RegisterPageIOS extends React.Component {
+export default class RegisterPageAndroid extends React.Component {
     constructor(props) {
         super(props)
         this.state = {

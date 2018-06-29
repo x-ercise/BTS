@@ -1,13 +1,8 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native'
 import { Router, Scene, Actions, TabIcon } from 'react-native-router-flux';
 import LoginPage from './src/LoginPage';
-import RegisterPage from './src/RegisterPage.android';
+import RegisterPageAndroid from './src/RegisterPage.android';
 import LoginPageIOS from './src/LoginPage.ios';
 import RegisterPageIOS from './src/RegisterPage.ios';
 
@@ -16,7 +11,6 @@ type Props = {};
 export default class App extends React.Component<Props> {
   render() {
     let isIOS = (Platform.OS === 'ios');
-    
 
     const sceneIOS = (
       
@@ -56,7 +50,7 @@ export default class App extends React.Component<Props> {
                 initial
                 />
           <Scene key="register" 
-                  component={RegisterPage}
+                  component={RegisterPageAndroid}
                   hideNavBar={true}
                   title="REGISTER"
                   />
