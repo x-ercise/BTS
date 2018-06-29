@@ -1,3 +1,4 @@
+import React from "react";
 import * as Keychain from 'react-native-keychain';
 
 //const urlLogin = "http://spwwebapi.azurewebsites.net/api";

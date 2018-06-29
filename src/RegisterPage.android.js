@@ -12,6 +12,7 @@ import Loader        from './Components/Loader'
 import ApiUtils      from './Services/ApiUtils'
 import bts_logo      from './assets/bts_logo.png'
 
+const credentialAppName = "BlessedTotalSolution"
 //const defaultApi = "http://spwwebapi.azurewebsites.net/api"
 const defaultApi = "http://192.168.1.252/SPWWebAPI/api"
 export default class RegisterPageIOS extends React.Component {
@@ -25,6 +26,7 @@ export default class RegisterPageIOS extends React.Component {
             accessToken : '',
             endpoint    : defaultApi,
             loading     : false,
+            myKeychain  : {},
             jsonObj     : {},
         }
         this.onContinue = this.onContinue.bind(this)
@@ -46,9 +48,8 @@ export default class RegisterPageIOS extends React.Component {
         const { user, passwd, endpoint } = this.state
         
         if (user && passwd) {
-            let queryString = endpoint + ApiUtils.urlRegisterTest + user + '|' + passwd + '||'
             Promise.all([
-                this.onSubscribe(queryString),
+                this.onSubscribe(endpoint, user, passwd),
             ])
             .catch((error) => {
                 this.setState({ loading : false })
@@ -76,7 +77,24 @@ export default class RegisterPageIOS extends React.Component {
         await Keychain.resetGenericPassword()
     }
     onGotoLogin = () => {
-        Actions.login()
+        const { 
+            user, 
+            passwd,
+            accessToken,
+            endpoint,
+            myKeychain
+        } = this.state
+        //check if have changed, save change before navigate to login
+        if (
+               (user        != myKeychain.username)
+            || (passwd      != myKeychain.password)
+            || (accessToken != myKeychain.accessToken)
+            || (endpoint    != myKeychain.endpoint)
+        ) {
+            this.onSubscribe(endpoint, user, passwd)
+        } else {
+            Actions.login()
+        }
     }
     async onFetch(queryString) {
         const strUrl = queryString
@@ -90,12 +108,15 @@ export default class RegisterPageIOS extends React.Component {
                 })
             })
             .catch((error) => this.onProxyError(error))
+            .finally(() => {
+                this.setState({ loading : false })
+            })
     }
 
-    onSubscribe = (queryString) => {
+    onSubscribe = (endpoint, user, passwd) => {
+        this.setState({ loading : true })
         try {
-            this.setState({ loading : true })
-            const strUrl = queryString
+            const strUrl = endpoint + ApiUtils.urlRegisterTest + user + '|' + passwd + '||'
             
             Promise.all([this.onFetch(strUrl)])
             .then(() => {
@@ -117,13 +138,14 @@ export default class RegisterPageIOS extends React.Component {
                         accessToken : jsonData.MobileToken
                     })
                     let services = JSON.stringify({
+                        username : user,
                         endpoint : endpoint,
                         password : passwd,
                         accessToken : jsonData.MobileToken
                     })
                     
                     Alert.alert('Infomation', jsonData.Message,
-                        [{ text : 'Agree', onPress: async() => await this.setCredential(user, services) }]
+                        [{ text : 'Agree', onPress: async() => await this.setCredential(services) }]
                     )
                     
                 }
@@ -131,6 +153,8 @@ export default class RegisterPageIOS extends React.Component {
 
         } catch (error) {
             this.onProxyError(error)
+        } finally {
+            this.setState({ loading : false })
         }
     }
     onProxyDone = (objJson) =>  {
@@ -179,7 +203,7 @@ export default class RegisterPageIOS extends React.Component {
                 , { cancelable: false }
             )
     }
-    setCredential = async(username, services) => {
+    setCredential = async(services) => {
         
         try {
             const credentials = await Keychain.getGenericPassword()
@@ -190,7 +214,7 @@ export default class RegisterPageIOS extends React.Component {
                 //console.log('No credentials stored')
             }
             this.setState({ loading : false })
-            await Keychain.setGenericPassword(username, services).done(() => {
+            await Keychain.setGenericPassword(credentialAppName, services).done(() => {
                 Actions.login()
             })
         } catch (error) {
@@ -210,18 +234,21 @@ export default class RegisterPageIOS extends React.Component {
     getCredential = async() => {
         
         try {
-            this.setState({ loading : false })
-
+            
             const credentials = await Keychain.getGenericPassword()
             if (credentials) {
-                const { endpoint, password, accessToken } = JSON.parse(credentials.password)
+                const { endpoint, username, password, accessToken } = JSON.parse(credentials.password)
                 if ( endpoint && accessToken && password ) {
+                    
                     this.setState({
-                        user        : credentials.username,
+                        user        : username,
                         passwd      : password,
                         accessToken : accessToken,
-                        endpoint    : endpoint 
+                        endpoint    : endpoint,
+                        myKeychain  : credentials,
                     })
+                    
+                    this.setState({ myKeychain : credentials })
                 } else {
                     Alert.alert(
                         'error'
@@ -230,12 +257,6 @@ export default class RegisterPageIOS extends React.Component {
                         , { cancelable: false }
                     )
                 }
-            } else {
-                /*let ep = (!credentials.endpoint && defaultApi)
-                this.setState({
-                    endpoint : ep
-                })
-                */
             }
 
         } catch (error) {
@@ -249,6 +270,7 @@ export default class RegisterPageIOS extends React.Component {
         } finally {
             this.setState({ loading : false })
         }
+
       
     }
 
@@ -265,59 +287,62 @@ export default class RegisterPageIOS extends React.Component {
                     </View>
                 </View>
                 
-                    <KeyboardAvoidingView behavior="padding">
-                        <View style={{ paddingHorizontal:20, paddingVertical:20, borderWidth: 1, borderColor: '#a4a5a6' }}>
-                            <Text style={{ fontWeight: 'bold', fontSize: 15 }}>Web API :</Text>
-                            <TextInput
-                                dataDetectorType = "link"
-                                autoCapitalize = 'none'
-                                placeholder    ="input end point service address"
-                                style          ={styles.input}
-                                value          ={this.state.endpoint}
-                                onChangeText   ={(text) => this.setState({endpoint : text})}
-                                value          ={this.state.endpoint} />
+                <KeyboardAvoidingView behavior="padding">
+                    <View style={{ paddingHorizontal:20, paddingVertical:20, borderWidth: 1, borderColor: '#a4a5a6' }}>
+                        <Text style={{ fontWeight: 'bold', fontSize: 15 }}>Web API :</Text>
+                        <TextInput
+                            dataDetectorType = "link"
+                            autoCapitalize = 'none'
+                            underlineColorAndroid = "transparent"
+                            placeholder    ="input end point service address"
+                            style          ={styles.input}
+                            value          ={this.state.endpoint}
+                            onChangeText   ={(text) => this.setState({endpoint : text})}
+                            value          ={this.state.endpoint} />
+                    </View>
+                    <View style={{ backgroundColor:'#ebebeb', paddingHorizontal:20 }}>
+                        <View style={{ paddingTop:20, paddingBottom:10, }}>
+                            <Text style={{ fontWeight: 'bold', fontSize: 16, color:'#001577' }}>Fingerprint Registration (only first time)</Text>
                         </View>
-                        <View style={{ backgroundColor:'#ebebeb', paddingHorizontal:20 }}>
-                            <View style={{ paddingTop:20, paddingBottom:10, }}>
-                                <Text style={{ fontWeight: 'bold', fontSize: 16, color:'#001577' }}>Fingerprint Registration (only first time)</Text>
-                            </View>
-                            <View style={{ marginTop:10 }}>
-                                <Text style={{ fontWeight: 'bold', fontSize: 15 }}>User Name :</Text>
-                                <TextInput
-                                        placeholder    ="input username"
-                                        autoCapitalize = 'none'
-                                        style          ={styles.input}
-                                        value          ={this.state.user}
-                                        onChangeText   ={(text) => this.setState({user : text})}
-                                        value          ={this.state.user} />
-                            </View>
-                            <View style={{ marginTop:10 }}>
-                                <Text style={{ fontWeight: 'bold', fontSize: 15 }}>Password :</Text>
-                                <TextInput
-                                    placeholder    ="input password"
+                        <View style={{ marginTop:10 }}>
+                            <Text style={{ fontWeight: 'bold', fontSize: 15 }}>User Name :</Text>
+                            <TextInput
+                                    placeholder    ="input username"
+                                    underlineColorAndroid = "transparent"
                                     autoCapitalize = 'none'
                                     style          ={styles.input}
-                                    secureTextEntry={true}
-                                    onChangeText   ={(text) => this.setState({passwd: text})}
-                                    value          ={this.state.passwd} />
-                            </View>
-                            {
-
-                                !(accessToken.length > 0) &&
-                                <View style={{ alignItems:'center', paddingTop:20, paddingBottom:15, }}>
-                                    <TouchableOpacity
-                                        style  ={ styles.button }
-                                        onPress={ this.onContinue }>
-                                        <Text style={{ textAlign:'center', color:'#FFFFFF', fontWeight: '700' }}>Continue</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            }
-                            {
-                                (accessToken.length > 0) && 
-                                <View style={{ alignItems:'center', paddingTop:20, paddingBottom:15, }} />
-                            }
+                                    value          ={this.state.user}
+                                    onChangeText   ={(text) => this.setState({user : text})}
+                                    value          ={this.state.user} />
                         </View>
-                    </KeyboardAvoidingView>
+                        <View style={{ marginTop:10 }}>
+                            <Text style={{ fontWeight: 'bold', fontSize: 15 }}>Password :</Text>
+                            <TextInput
+                                placeholder    ="input password"
+                                underlineColorAndroid = "transparent"
+                                autoCapitalize = 'none'
+                                style          ={styles.input}
+                                secureTextEntry={true}
+                                onChangeText   ={(text) => this.setState({passwd: text})}
+                                value          ={this.state.passwd} />
+                        </View>
+                        {
+
+                            !(accessToken.length > 0) &&
+                            <View style={{ alignItems:'center', paddingTop:20, paddingBottom:15, }}>
+                                <TouchableOpacity
+                                    style  ={ styles.button }
+                                    onPress={ this.onContinue }>
+                                    <Text style={{ textAlign:'center', color:'#FFFFFF', fontWeight: '700' }}>Continue</Text>
+                                </TouchableOpacity>
+                            </View>
+                        }
+                        {
+                            (accessToken.length > 0) && 
+                            <View style={{ alignItems:'center', paddingTop:20, paddingBottom:15, }} />
+                        }
+                    </View>
+                </KeyboardAvoidingView>
                 
                 {
                 
@@ -339,7 +364,7 @@ export default class RegisterPageIOS extends React.Component {
 
 const styles = StyleSheet.create({
     mainContainer: {
-        flex: 1, flexGrow: 1, flexDirection: 'column', backgroundColor:'#fff', marginTop: 40
+        flex: 1, flexGrow: 1, flexDirection: 'column', backgroundColor:'#fff', marginTop: 20
     },
     button: {
         borderTopLeftRadius: 10,

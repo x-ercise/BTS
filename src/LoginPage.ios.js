@@ -33,8 +33,14 @@ export default class LoginPageIOS extends React.Component {
     }
 
     handleFingerprintMessageDismissed = () => {
-        this.setState({ sensorPrompted: true, errorMessage: '' })
-        //this.onFingerListening()
+        
+        if (this.state.accessToken.length > 0) {
+            this.setState({ sensorPrompted: true, errorMessage: '' })
+            this.onFingerListening()
+        } else {
+
+        }
+        
     }
 
     componentWillUnmount() {
@@ -46,8 +52,11 @@ export default class LoginPageIOS extends React.Component {
             this.getCredential(), 
             FingerprintScanner.isSensorAvailable().catch(error => this.setState({ errorMessage: error.message }))
         ])
-        .then(resolve => {
+        .then(() => {
             this.onFingerListening()
+        })
+        .catch(error => {
+            RNExitApp.exitApp()
         })
     }
     handleAuthenticationAttempted = (error) => {
@@ -105,9 +114,9 @@ export default class LoginPageIOS extends React.Component {
         }
     }
     onProxyError = (error) => {
-        if (error.response && !error.response.ok)
+        if (error.response && !error.response.ok) {
             Alert.alert('Network error', error.response.status + ' access service', [{ text : 'Dismiss' }])
-        else {
+        } else {
             Alert.alert('Network error', error.message, [{ text : 'Dismiss' }])
             Actions.register()
         }

@@ -45,7 +45,12 @@ export default class LoginPage extends React.Component {
     }
     componentWillMount() {
         //await this.getCredential()
-        Promise.all([this.getCredential(), FingerprintScanner.isSensorAvailable()])
+        Promise.all(
+            [
+                this.getCredential(), 
+                FingerprintScanner.isSensorAvailable()
+            ]
+        )
     }
     componentWillUnmount() {
         FingerprintScanner.release()
@@ -203,11 +208,6 @@ export default class LoginPage extends React.Component {
                             <View style={styles.messageContainner}>
                                 <Text style={styles.errorMessage}>
                                     {errorMessage || 'Scan your fingerprint on the\ndevice scanner to continue'}
-                                    {/*
-                                    <ShakingText ref={(instance) => { this.description = instance }}>
-                                        {errorMessage || 'Scan your fingerprint on the\ndevice scanner to continue'}
-                                    </ShakingText>
-                                    */}
                                 </Text>
                             </View>
                         )}

@@ -34,11 +34,11 @@
   [self.window makeKeyAndVisible];
   
   // Place this code after "[self.window makeKeyAndVisible]" and before "return YES;"
-  
+  /*
   UIView* launchScreenView = [[[NSBundle mainBundle] loadNibNamed:@"LaunchScreen" owner:self options:nil] objectAtIndex:0];
   launchScreenView.frame   = self.window.bounds;
   rootView.loadingView     = launchScreenView;
-  
+  */
   return YES;
 }
 

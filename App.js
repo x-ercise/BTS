@@ -7,7 +7,7 @@ import React from 'react';
 import { Platform, StyleSheet } from 'react-native'
 import { Router, Scene, Actions, TabIcon } from 'react-native-router-flux';
 import LoginPage from './src/LoginPage';
-import RegisterPage from './src/RegisterPage';
+import RegisterPage from './src/RegisterPage.android';
 import LoginPageIOS from './src/LoginPage.ios';
 import RegisterPageIOS from './src/RegisterPage.ios';
 
@@ -34,7 +34,8 @@ export default class App extends React.Component<Props> {
                 initial
                 />
           <Scene key="register" 
-                  component={RegisterPageIOS}  
+                  component={RegisterPageIOS}
+                  hideNavBar
                   title="REGISTER"
                   />
         </Scene>
@@ -55,7 +56,8 @@ export default class App extends React.Component<Props> {
                 initial
                 />
           <Scene key="register" 
-                  component={RegisterPage}  
+                  component={RegisterPage}
+                  hideNavBar={true}
                   title="REGISTER"
                   />
         </Scene>
