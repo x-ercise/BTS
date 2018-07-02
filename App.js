@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native'
 import { Router, Scene, Actions, TabIcon } from 'react-native-router-flux';
-import LoginPage from './src/LoginPage';
+import LoginPageAndroid from './src/LoginPage.android';
 import RegisterPageAndroid from './src/RegisterPage.android';
 import LoginPageIOS from './src/LoginPage.ios';
 import RegisterPageIOS from './src/RegisterPage.ios';
@@ -44,9 +44,9 @@ export default class App extends React.Component<Props> {
                barButtonIconStyle={styles.barButtonIcon}
                >
           <Scene key="login" 
-                component={LoginPage} 
+                component={LoginPageAndroid} 
                 title="LOGIN" 
-                hideNavBar
+                hideNavBar={true}
                 initial
                 />
           <Scene key="register" 

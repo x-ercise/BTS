@@ -9,8 +9,7 @@ import { Actions }        from 'react-native-router-flux'
 import FingerprintScanner from 'react-native-fingerprint-scanner'
 import RNExitApp          from 'react-native-exit-app'
 import Loader             from './Components/Loader'
-import ApiUtils           from './Services//ApiUtils'
-import ShakingText        from './Components/ShakingText'
+import ApiUtils           from './Services/ApiUtils'
 
 export default class LoginPageIOS extends React.Component {
     
@@ -201,9 +200,7 @@ export default class LoginPageIOS extends React.Component {
                         {errorMessage && (
                             <View style={styles.messageContainner}>
                                 <Text style={styles.errorMessage}>
-                                    <ShakingText ref={(instance) => { this.description = instance }}>
-                                        {errorMessage || 'Scan your fingerprint on the\ndevice scanner to continue'}
-                                    </ShakingText>
+                                    {errorMessage || 'Scan your fingerprint on the\ndevice scanner to continue'}
                                 </Text>
                             </View>
                         )}

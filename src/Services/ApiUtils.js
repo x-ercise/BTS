@@ -4,7 +4,7 @@ import * as Keychain from 'react-native-keychain';
 //const urlLogin = "http://spwwebapi.azurewebsites.net/api";
 //const urlRegister = "http://spwwebapi.azurewebsites.net/api";
 
-var ApiUtils = { 
+const ApiUtils = { 
 
   urlLogin        : "/Mobile_FingerPrint/Login?id=",
   urlRegister     : "/Mobile_FingerPrint/Register?id=",

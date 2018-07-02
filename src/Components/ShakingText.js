@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
+import PropTypes          from 'prop-types';
 import { Animated, Text } from 'react-native';
-import PropTypes from 'prop-types';
 
-export default class ShakingText extends Component {
+class ShakingText extends Component {
 
   componentWillMount() {
     this.shakedValue = new Animated.Value(0);
@@ -53,3 +53,5 @@ ShakingText.propTypes = {
   ]),
   style: Text.propTypes.style,
 };
+
+export default ShakingText;

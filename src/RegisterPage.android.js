@@ -85,11 +85,12 @@ export default class RegisterPageAndroid extends React.Component {
             myKeychain
         } = this.state
         //check if have changed, save change before navigate to login
+        const oldKey = JSON.parse(myKeychain)
         if (
-               (user        != myKeychain.username)
-            || (passwd      != myKeychain.password)
-            || (accessToken != myKeychain.accessToken)
-            || (endpoint    != myKeychain.endpoint)
+               (user        != oldKey.username)
+            || (passwd      != oldKey.password)
+            || (accessToken != oldKey.accessToken)
+            || (endpoint    != oldKey.endpoint)
         ) {
             this.onSubscribe(endpoint, user, passwd)
         } else {
@@ -177,6 +178,7 @@ export default class RegisterPageAndroid extends React.Component {
                 accessToken : jsonData.MobileToken,
             })
             let services = JSON.stringify({
+                username : user,
                 endpoint : endpoint,
                 password : passwd,
                 accessToken : jsonData.MobileToken
@@ -239,16 +241,13 @@ export default class RegisterPageAndroid extends React.Component {
             if (credentials) {
                 const { endpoint, username, password, accessToken } = JSON.parse(credentials.password)
                 if ( endpoint && accessToken && password ) {
-                    
                     this.setState({
                         user        : username,
                         passwd      : password,
                         accessToken : accessToken,
                         endpoint    : endpoint,
-                        myKeychain  : credentials,
+                        myKeychain  : credentials.password,
                     })
-                    
-                    this.setState({ myKeychain : credentials })
                 } else {
                     Alert.alert(
                         'error'
